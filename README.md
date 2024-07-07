@@ -102,14 +102,14 @@ The operating time is controlled by two variables, dischargeStartTime and discha
 
 1. **Open `index.js` file.**
 
-2. **Locate the discharge start and end time::**
+2. **Locate the discharge start and end time:**
 
     ```javascript
-    const dischargeStartTime = "20:25";
+    const dischargeStartTime = "20:25"; 
     const dischargeEndTime = "20:32";
     ```
 
-3. **Modify the start and end time under the 24 hour format::**
+3. **Modify the start and end time under the 24 hour format:**
 
     ```javascript
     const dischargeStartTime = "12:00";
