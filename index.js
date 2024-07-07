@@ -6,7 +6,8 @@ require('dotenv').config();
 const app = express();
 const port = 3000;
 
-const apiToken = process.env.API_KEY; const inverterId = "CE2218G425";
+const apiToken = process.env.API_KEY;
+const inverterId = process.env.INVERTER_ID;
 
 const inverterRequest = wretch(`https://api.givenergy.cloud/v1/inverter/${inverterId}`)
     .auth(`Bearer ${apiToken}`)
