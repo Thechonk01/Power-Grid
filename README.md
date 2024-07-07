@@ -25,7 +25,7 @@ This program automates the management of GivEnergy inverter settings. It uses th
 1. **Clone the repository:**
 
     ```sh
-    git clone <repository_url>
+    git clone https://github.com/Thechonk01/
     cd <repository_folder>
     ```
 
@@ -89,20 +89,32 @@ The scheduled update is controlled by Node-Cron and is set to run every 15 minut
 
     ```javascript
     cron.schedule("*/15 * * * *", async () => {
-        console.log("Running scheduled settings update...");
-        await updateSettings("Scheduled");
-    });
     ```
 
 3. **Modify the schedule expression** according to the [cron syntax](https://crontab.guru/):
 
     ```javascript
     cron.schedule("new_cron_expression", async () => {
-        console.log("Running scheduled settings update...");
-        await updateSettings("Scheduled");
-    });
+    ```
+## Modify the Operating Time
+
+The operating time is controlled by two variables, dischargeStartTime and dischargeEndTime. To modify the operating times:
+
+1. **Open `index.js` file.**
+
+2. **Locate the discharge start and end time::**
+
+    ```javascript
+    const dischargeStartTime = "20:25";
+    const dischargeEndTime = "20:32";
     ```
 
+3. **Modify the start and end time under the 24 hour format::**
+
+    ```javascript
+    const dischargeStartTime = "12:00";
+    const dischargeEndTime = "17:00";
+    ```
 ## Error Handling
 
 - **Update Settings Endpoint**: If an error occurs while updating settings, a JSON response with the error message and details is returned.
@@ -118,19 +130,6 @@ The scheduled update is controlled by Node-Cron and is set to run every 15 minut
     - `56`: DC Discharge Enable
     - `71`: Battery Reserve Limit
 
-- **Battery Status Check**: The script checks the current battery percentage and adjusts settings based on predefined thresholds.
 
-## Example Response
-
-### Update Settings Response
-
-```json
-{
-    "status": "success",
-    "timestamp": "2024-07-07T12:34:56.789Z",
-    "results": [
-        { "step": 1, "message": "Executed time: 2024-07-07T12:34:56.789Z" },
-        { "step": 2, "message": "Current battery percentage: 80%" },
-        { "step": 3, "message": "Eco Mode updated to false" }
-    ]
-}
+# License
+This project is licensed under the ISC License. See the [LICENSE](https://github.com/Thechonk01/Power-Grid/blob/master/LICENSE) file for details.
