@@ -9,6 +9,11 @@ const port = 3000;
 const apiToken = process.env.API_KEY;
 const inverterId = process.env.INVERTER_ID;
 
+const batteryReserve = 60;
+const mainBatteryReserve = 6;
+const ecoMode = false;
+
+
 const inverterRequest = wretch(`https://api.givenergy.cloud/v1/inverter/${inverterId}`)
     .auth(`Bearer ${apiToken}`)
     .content("application/json")
@@ -28,10 +33,12 @@ const settingsMap = {
 };
 
 async function setSetting(settingId, value) {
-    await post_request(`/settings/${settingId}/write`, { value });
+    const context = "Power Grid Automation";
+    await post_request(`/settings/${settingId}/write`, { value, context });
     const settingName = settingsMap[settingId] || `Setting ${settingId}`;
     return `${settingName} updated to ${value}`;
 }
+
 
 async function getSetting(settingId) {
     const response = await post_request(`/settings/${settingId}/read`, { "context": "Power Grid Automation" });
@@ -75,7 +82,7 @@ async function updateSettings(updateType) {
     };
 
     const currentTime = new Date();
-    const dischargeStartTime = "20:25";
+    const dischargeStartTime = "17:00";
     const dischargeEndTime = "20:32";
 
     results.push(`Executed time: ${currentTime.toISOString()}`);
@@ -83,29 +90,22 @@ async function updateSettings(updateType) {
     const batteryPercentage = await getBatteryStatus();
     results.push(`Current battery percentage: ${batteryPercentage}%`);
 
-    if (batteryPercentage > 30 && isWithinDischargeTime(currentTime, dischargeStartTime, dischargeEndTime)) {
+    if (batteryPercentage > batteryReserve && isWithinDischargeTime(currentTime, dischargeStartTime, dischargeEndTime)) {
         if (currentSettings.dcDischargeEnable == false) {
             results.push(await setSetting(56, true));  // Enable DC Discharge
         }
         if (currentSettings.ecoMode == true) {
             results.push(await setSetting(24, false));   // Disable Eco Mode
         }
-        if (currentSettings.batteryReserveLimit !== 30) {
-            results.push(await setSetting(71, 30));      // Set Battery Reserve % Limit to 30
+        if (currentSettings.batteryReserveLimit !== batteryReserve) {
+            results.push(await setSetting(71, batteryReserve));      // Set Battery Reserve % Limit to batteryReserve
         }
     } else {
 
-        // Check and update settings if needed
-        if (currentSettings.ecoMode == false) {
-            results.push(await setSetting(24, true));
-        }
-
         if (currentSettings.dcDischargeEnable == true) {
             results.push(await setSetting(56, false));
-        }
-
-        if (currentSettings.batteryReserveLimit !== 6) {
-            results.push(await setSetting(71, 6));
+            results.push(await setSetting(24, ecoMode));
+            results.push(await setSetting(71, mainBatteryReserve));
         }
     }
 
