@@ -41,6 +41,7 @@ This program automates the management of GivEnergy inverter settings. It uses th
 
     ```env
     API_KEY=your_api_key_here
+    INVERTER_ID=your_inverter_id_here
     ```
 
 ## Usage
