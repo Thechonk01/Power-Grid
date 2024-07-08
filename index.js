@@ -9,9 +9,9 @@ const port = 3000;
 const apiToken = process.env.API_KEY;
 const inverterId = process.env.INVERTER_ID;
 
-const batteryReserve = 60;
-const mainBatteryReserve = 6;
-const ecoMode = false;
+const batteryReserve = 60; // 60% battery reserve while discharging
+const mainBatteryReserve = 6; // 6% battery reserve while not discharging
+const ecoMode = false; // Eco Mode disabled
 
 
 const inverterRequest = wretch(`https://api.givenergy.cloud/v1/inverter/${inverterId}`)
@@ -82,8 +82,8 @@ async function updateSettings(updateType) {
     };
 
     const currentTime = new Date();
-    const dischargeStartTime = "17:00";
-    const dischargeEndTime = "20:32";
+    const dischargeStartTime = "16:00";
+    const dischargeEndTime = "19:00";
 
     results.push(`Executed time: ${currentTime.toISOString()}`);
 
