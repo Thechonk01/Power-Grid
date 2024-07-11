@@ -11,8 +11,9 @@ const inverterId = process.env.INVERTER_ID;
 
 const batteryReserve = 60; // 60% battery reserve while discharging
 const mainBatteryReserve = 6; // 6% battery reserve while not discharging
-const ecoMode = false; // Eco Mode disabled
+const ecoMode = true; // Eco Mode disabled
 
+var status = "Charging";
 
 const inverterRequest = wretch(`https://api.givenergy.cloud/v1/inverter/${inverterId}`)
     .auth(`Bearer ${apiToken}`)
@@ -71,6 +72,7 @@ function isWithinDischargeTime(currentTime, startTime, endTime) {
 }
 
 async function updateSettings(updateType) {
+    console.log(`Running settings update... Update Type: ${updateType}`);
     let results = [];
 
     const currentSettings = {
@@ -87,10 +89,13 @@ async function updateSettings(updateType) {
 
     results.push(`Executed time: ${currentTime.toISOString()}`);
 
+    results.push(`Current mode: ${status}`)
+
     const batteryPercentage = await getBatteryStatus();
     results.push(`Current battery percentage: ${batteryPercentage}%`);
 
     if (batteryPercentage > batteryReserve && isWithinDischargeTime(currentTime, dischargeStartTime, dischargeEndTime)) {
+        status = "Discharging";
         if (currentSettings.dcDischargeEnable == false) {
             results.push(await setSetting(56, true));  // Enable DC Discharge
         }
@@ -98,13 +103,23 @@ async function updateSettings(updateType) {
             results.push(await setSetting(24, false));   // Disable Eco Mode
         }
         if (currentSettings.batteryReserveLimit !== batteryReserve) {
-            results.push(await setSetting(71, batteryReserve));      // Set Battery Reserve % Limit to batteryReserve
+            results.push(await setSetting(71, batteryReserve));      // Set Battery Reserve % Limit to batteryReserve -1
+        }
+        if (currentSettings.dcDischargeStartTime !== dischargeStartTime) {
+            results.push(await setSetting(53, dischargeStartTime));  // Set DC Discharge Start Time
+        }
+        if (currentSettings.dcDischargeEndTime !== dischargeEndTime) {
+            results.push(await setSetting(54, dischargeEndTime));    // Set DC Discharge End Time
         }
     } else {
-
+        status = "Charging";
         if (currentSettings.dcDischargeEnable == true) {
             results.push(await setSetting(56, false));
+        }
+        if (currentSettings.ecoMode !== ecoMode) {
             results.push(await setSetting(24, ecoMode));
+        }
+        if (currentSettings.batteryReserveLimit !== mainBatteryReserve) {
             results.push(await setSetting(71, mainBatteryReserve));
         }
     }
@@ -130,8 +145,12 @@ function formatResponse(results) {
 
 // Schedule the updateSettings function to run every 15 minutes
 cron.schedule("*/15 * * * *", async () => {
-    console.log("Running scheduled settings update...");
-    await updateSettings("Scheduled");
+    try {
+        await updateSettings("Scheduled");
+    } catch (error) {
+        console.error("An error occurred while updating settings.", error);
+        latestResults = ["An error occurred while updating settings.", error.message];
+    }
 });
 
 app.get('/update-settings', async (req, res) => {
@@ -141,9 +160,11 @@ app.get('/update-settings', async (req, res) => {
     } catch (error) {
         console.error(error);
         if (error instanceof Error) {
+            latestResults = [`An error occurred while updating settings manually. ${error.message}`];
             res.status(500).json({ status: "error", message: "An error occurred while updating settings.", details: error.message });
         } else {
             res.status(500).json({ status: "error", message: "An unknown error occurred." });
+            latestResults = ["An unknown error occurred during manual update."];
         }
     }
 });
